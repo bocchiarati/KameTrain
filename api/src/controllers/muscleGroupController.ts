@@ -1,3 +1,4 @@
+import type {Request, Response} from 'express';
 import {muscleGroupService} from "../services/muscleGroupService.js";
 
 export const getMuscleGroup = async (req: Request, res: Response) => {
