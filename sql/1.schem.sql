@@ -1,3 +1,35 @@
+-- 1. On s'assure que la DB existe et on l'utilise
+CREATE DATABASE IF NOT EXISTS kametrain_db;
+USE kametrain_db;
+
+-- 2. Création de la fonction BIN_TO_UUID
+DELIMITER //
+CREATE OR REPLACE FUNCTION BIN_TO_UUID(b BINARY(16))
+    RETURNS CHAR(36)
+    DETERMINISTIC
+BEGIN
+    DECLARE hex CHAR(32);
+    SET hex = HEX(b);
+    RETURN LOWER(CONCAT(
+            LEFT(hex, 8), '-',
+            MID(hex, 9, 4), '-',
+            MID(hex, 13, 4), '-',
+            MID(hex, 17, 4), '-',
+            RIGHT(hex, 12)
+                 ));
+END //
+DELIMITER ;
+
+-- 3. Optionnel : Création de la fonction UUID_TO_BIN (pour les INSERT/WHERE)
+DELIMITER //
+CREATE OR REPLACE FUNCTION UUID_TO_BIN(s CHAR(36))
+    RETURNS BINARY(16)
+    DETERMINISTIC
+BEGIN
+    RETURN UNHEX(REPLACE(s, '-', ''));
+END //
+DELIMITER ;
+
 -- Tables de base / Référentiels
 CREATE TABLE users (
     id BINARY(16) PRIMARY KEY,
