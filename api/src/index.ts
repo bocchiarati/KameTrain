@@ -1,5 +1,6 @@
 import express from 'express';
 import muscleGroupRouter from "./routes/muscleGroupRouter.js";
+import exercisesRouter from "./routes/exercisesRouter.js";
 
 const app = express();
 const PORT = 3000;
@@ -9,7 +10,8 @@ app.get('/', (req: any, res: { json: (arg0: { message: string; }) => void; }) =>
     res.json({ message: "L'API de ton app de sport est prête !" });
 });
 
-app.use("/muscleGroups", muscleGroupRouter)
+app.use("/muscleGroups", muscleGroupRouter);
+app.use("/exercises", exercisesRouter);
 app.listen(PORT, () => {
     console.log(`Serveur lancé sur http://localhost:${PORT}`);
 });
