@@ -18,11 +18,12 @@ services:
     volumes:
       - ./api:/api
     working_dir: /api
-    command: sh -c "npm install && npx ts-node-dev --respawn --transpile-only src/index.ts"
+    command: sh -c "npm install && npm run dev"
     environment:
       - DB_HOST=${DB_HOST:-database}
       - DB_USER=${DB_USER_NAME}
       - DB_PASSWORD=${DB_USER_PASSWORD}
+      - DB_DATABASE=${DB_DATABASE}
     depends_on:
       - database
 
