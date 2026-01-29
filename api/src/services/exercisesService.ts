@@ -7,5 +7,9 @@ export const exercisesService = {
     },
     getExerciseById: async (id: string): Promise<Exercise | null> => {
         return await exercisesRepository.findById(id) as Exercise | null
+    },
+
+    newExercise: async (name: string, muscle_group_id: string): Promise<Exercise | null> => {
+        return await exercisesRepository.create(name, muscle_group_id) as Exercise | null
     }
 }

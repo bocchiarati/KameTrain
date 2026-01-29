@@ -17,9 +17,21 @@ export const exercisesController = {
             if (!exercise) {
                 return res.status(404).json({ error: 'Exercise not found' });
             }
-            return res.json(exercise);
+            return res.status(200).json(exercise);
         } catch (error) {
             return res.status(500).json({ error : error });
+        }
+    },
+    createExercise: async (req: Request, res: Response) => {
+        const data = req.body;
+        try {
+            const exercise = await exercisesService.newExercise(data.name, data.muscle_group_id)
+            if(!exercise) {
+                return res.status(401).json({ error: 'Exercise not created'})
+            }
+            return res.status(200).json(exercise)
+        } catch (error) {
+            return res.status(500).json({ error : error })
         }
     }
 };
