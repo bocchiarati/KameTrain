@@ -1,7 +1,10 @@
 import { Router } from 'express';
-import {getMuscleGroup} from "../controllers/muscleGroupController.js";
+import {muscleGroupController} from "../controllers/muscleGroupController.js";
 
 const router = Router();
-router.get('/', getMuscleGroup)
+
+// GET
+router.get('/', muscleGroupController.getMuscleGroups) // Retourne tout les group
+router.get('/:id', muscleGroupController.getMuscleGroup)
 
 export default router;
