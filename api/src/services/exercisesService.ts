@@ -10,6 +10,9 @@ export const exercisesService = {
     },
 
     newExercise: async (name: string, muscle_group_id: string): Promise<Exercise | null> => {
-        return await exercisesRepository.create(name, muscle_group_id) as Exercise | null
+        return await exercisesRepository.create({
+            name,
+            muscle_group_id
+        })
     }
 }

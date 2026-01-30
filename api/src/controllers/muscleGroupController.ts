@@ -1,5 +1,6 @@
 import type {Request, Response} from 'express';
 import {muscleGroupService} from "../services/muscleGroupService.js";
+import {exercisesService} from "../services/exercisesService.js";
 
 export const muscleGroupController = {
     getMuscleGroups: async (req: Request, res: Response) => {
@@ -20,6 +21,22 @@ export const muscleGroupController = {
             return res.json(muscleGroup);
         } catch (error) {
             return res.status(500).json({ error : error });
+        }
+    },
+
+    createMuscleGroup: async(req: Request, res: Response) => {
+        const data = req.body;
+        try {
+            if(!data.libelle){
+                return res.status(401).json({error : 'Param missing'})
+            }
+            const muscleGroup = await muscleGroupService.newMuscleGroup(data.libelle)
+            if(!muscleGroup) {
+                return res.status(401).json({ error: 'Exercise not created'})
+            }
+            return res.status(200).json(muscleGroup)
+        } catch (error) {
+            return res.status(500).json({ error : error })
         }
     }
 }
