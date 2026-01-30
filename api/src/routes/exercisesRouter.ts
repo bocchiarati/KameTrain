@@ -1,11 +1,11 @@
-import {Router} from 'express';
-import {exercisesController} from "../controllers/exercisesController.js";
+import { BaseRouter } from './baseRouter.js';
+import type {Exercise} from '../models/Exercise.js';
+import { exercisesController } from '../controllers/exercisesController.js';
 
-const router = Router();
-router.get('/', exercisesController.getExercises)
-router.get('/:id', exercisesController.getExercise)
+class ExerciseRouter extends BaseRouter<Exercise> {
+    constructor() {
+        super(exercisesController);
+    }
+}
 
-router.post('/', exercisesController.createExercise)
-// router.patch('/:id')
-// router.delete('/:id')
-export default router;
+export default new ExerciseRouter().router;

@@ -1,10 +1,11 @@
-import { Router } from 'express';
-import {muscleGroupController} from "../controllers/muscleGroupController.js";
+import { BaseRouter } from './baseRouter.js';
+import type { MuscleGroup } from '../models/MuscleGroup.js';
+import { muscleGroupController } from '../controllers/muscleGroupController.js';
 
-const router = Router();
+class MuscleGroupRouter extends BaseRouter<MuscleGroup> {
+    constructor() {
+        super(muscleGroupController);
+    }
+}
 
-// GET
-router.get('/', muscleGroupController.getMuscleGroups) // Retourne tout les group
-router.get('/:id', muscleGroupController.getMuscleGroup)
-router.post('/', muscleGroupController.createMuscleGroup)
-export default router;
+export default new MuscleGroupRouter().router;

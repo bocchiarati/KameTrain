@@ -1,18 +1,11 @@
-import type {MuscleGroup} from "../models/MuscleGroup.js";
+import {BaseService} from "./baseService.js";
 import {muscleGroupRepository} from "../repositories/muscleGroupRepository.js";
-import type {Exercise} from "../models/Exercise.js";
-import {exercisesRepository} from "../repositories/exercisesRepository.js";
+import type {MuscleGroup} from "../models/MuscleGroup.js";
 
-export const muscleGroupService = {
-    getAllMuscleGroup: async (): Promise<MuscleGroup[]> => {
-        return await muscleGroupRepository.findAll()
-    },
-    getMuscleGroupById: async (id: string): Promise<MuscleGroup | null> => {
-        return await muscleGroupRepository.findById(id)
-    },
-    newMuscleGroup: async (libelle: string): Promise<MuscleGroup | null> => {
-        return await muscleGroupRepository.create({
-            libelle
-        })
+class MuscleGroupService extends BaseService<MuscleGroup> {
+    constructor() {
+        super(muscleGroupRepository);
     }
 }
+
+export const muscleGroupService = new MuscleGroupService();
