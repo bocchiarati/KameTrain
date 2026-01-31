@@ -77,6 +77,22 @@ export abstract class BaseRepository<T> {
         return this.findById(id);
     }
 
+    public async delete(id: string): Promise<T | null> {
+        // 1. On récupère l'objet
+        const objectToDelete = await this.findById(id);
+
+        // 2. Si l'objet existe, on le supprime
+        if (objectToDelete) {
+            await pool.query(
+                `DELETE FROM ${this.tableName} WHERE id = UUID_TO_BIN(?)`,
+                [id]
+            );
+        }
+
+        // 3. On retourne l'objet (ou null s'il n'existait pas)
+        return objectToDelete;
+    }
+
     private formatResult(row: any): T {
         if (!row) return row;
 

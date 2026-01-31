@@ -17,4 +17,8 @@ export abstract class BaseService<T> {
     async edit(id: string, data: Partial<T>): Promise<T | null> {
         return await this.repository.update(id, data)
     }
+
+    async delete(id: string): Promise<T | null> {
+        return await this.repository.delete(id)
+    }
 }

@@ -10,7 +10,7 @@ export abstract class BaseController<T> {
             const entities = await this.service.getAll();
             return res.status(200).json(entities);
         } catch (error) {
-            return res.status(500).json({ error });
+            return res.status(500).json({ error: error });
         }
     }
 
@@ -21,7 +21,7 @@ export abstract class BaseController<T> {
             if (!entity) return res.status(404).json({ error: 'Not found' });
             return res.status(200).json(entity);
         } catch (error) {
-            return res.status(500).json({ error });
+            return res.status(500).json({ error: error });
         }
     }
 
@@ -31,7 +31,7 @@ export abstract class BaseController<T> {
             if(!entity) return res.status(400).json({ error: 'Not created'});
             return res.status(201).json(entity);
         } catch (error) {
-            return res.status(500).json({ error });
+            return res.status(500).json({ error: error });
         }
     }
 
@@ -42,7 +42,18 @@ export abstract class BaseController<T> {
             if (!entity) return res.status(400).json({error: 'Not update'})
             return res.status(201).json(entity);
         } catch (error) {
-            return res.status(500).json({ error })
+            return res.status(500).json({ error: error })
+        }
+    }
+
+    delete = async (req: Request, res: Response) => {
+        try {
+            const {id} = req.params
+            const entity = await this.service.delete(id as string)
+            if (!entity) return res.status(400).json({error: "Nothing to delete"})
+            return res.status(201).json({ message: "This entity has been deleted : ", entity: entity})
+        } catch (error) {
+            return res.status(500).json({ error: error })
         }
     }
 }
