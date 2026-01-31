@@ -14,5 +14,6 @@ export abstract class BaseRouter<T> {
         this.router.get('/', this.controller.getAll);
         this.router.get('/:id', this.controller.getById);
         this.router.post('/', this.controller.create);
+        this.router.patch('/:id', this.controller.edit);
     }
 }

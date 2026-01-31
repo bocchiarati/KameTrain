@@ -27,12 +27,22 @@ export abstract class BaseController<T> {
 
     create = async (req: Request, res: Response) => {
         try {
-            // Correction du data.body -> req.body
             const entity = await this.service.new(req.body);
             if(!entity) return res.status(400).json({ error: 'Not created'});
             return res.status(201).json(entity);
         } catch (error) {
             return res.status(500).json({ error });
+        }
+    }
+
+    edit = async (req: Request, res: Response) => {
+        try {
+            const {id} = req.params
+            const entity = await this.service.edit(id as string, req.body)
+            if (!entity) return res.status(400).json({error: 'Not update'})
+            return res.status(201).json(entity);
+        } catch (error) {
+            return res.status(500).json({ error })
         }
     }
 }

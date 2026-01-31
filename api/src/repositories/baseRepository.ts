@@ -44,6 +44,39 @@ export abstract class BaseRepository<T> {
         return this.findById(newId);
     }
 
+    public async update(id: string, data: Partial<T>): Promise<T | null> {
+        // 1. On récupère les colonnes à modifier
+        const columns = Object.keys(data);
+
+        // Si l'objet data est vide, on s'arrête là
+        if (columns.length === 0) return this.findById(id);
+
+        // 2. On construit la chaîne "colonne = ?"
+        // En gérant le UUID_TO_BIN si nécessaire
+        const setClause = columns.map(col => {
+            if (col.endsWith('_id')) {
+                return `${col} = UUID_TO_BIN(?)`;
+            }
+            return `${col} = ?`;
+        }).join(', ');
+
+        // 3. On prépare les valeurs (les données + l'ID pour le WHERE à la fin)
+        const values = [...Object.values(data), id];
+
+        // 4. On assemble la requête
+        // Note : On utilise UUID_TO_BIN(?) dans le WHERE pour la performance (index)
+        const sql = `
+        UPDATE ${this.tableName} 
+        SET ${setClause} 
+        WHERE id = UUID_TO_BIN(?)
+    `;
+
+        await pool.query(sql, values);
+
+        // 5. On retourne l'objet mis à jour
+        return this.findById(id);
+    }
+
     private formatResult(row: any): T {
         if (!row) return row;
 
