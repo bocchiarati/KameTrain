@@ -1,109 +1,100 @@
-import pool from "../db.js"
-import type {ResultSetHeader} from "mysql2";
-import {stringify, v4 as uuid} from 'uuid';
+import { PrismaClient } from '../generated/prisma/index.js';
+import { uuidUtils } from '../utils/uuid.js';
+import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { v4 as uuidv4, parse as uuidParse } from 'uuid';
 
-export abstract class BaseRepository<T> {
-    protected constructor(protected tableName: string) {}
+const adapter = new PrismaMariaDb({
+    host: process.env.DB_HOST!,
+    user: process.env.DB_USER!,
+    password: process.env.DB_PASSWORD!,
+    database: process.env.DB_DATABASE!,
+    connectionLimit: 5
+});
+const prisma = new PrismaClient({ adapter });
+
+export { prisma }
+
+export class BaseRepository<T> {
+    constructor(protected modelName: string) {}
+
+    protected get db() {
+        return (prisma as any)[this.modelName];
+    }
+
+    // --- LECTURE ---
 
     async findById(id: string): Promise<T | null> {
-        const [rows] = await pool.query<any>(
-            `SELECT * FROM ${this.tableName} WHERE id = UUID_TO_BIN(?)`,
-            [id]
-        );
-
-        // On formate la première ligne si elle existe
-        return rows[0] ? this.formatResult(rows[0]) : null;
+        const item = await this.db.findUnique({
+            where: { id: uuidUtils.toBin(id) }
+        });
+        return item ? this.formatOutput(item) : null;
     }
 
     async findAll(): Promise<T[]> {
-        const [rows] = await pool.query<any>(`SELECT * FROM ${this.tableName}`);
-
-        // On formate chaque ligne du tableau
-        return rows.map((row: any) => this.formatResult(row));
+        const items = await this.db.findMany();
+        return items.map((item: any) => this.formatOutput(item));
     }
 
-    async create (data: Partial<T>): Promise<T | null> {
-        const newId = uuid();
-        const columns = ['id', ...Object.keys(data)];
+    // --- ÉCRITURE ---
 
-        const placeholders = columns.map(col => {
-            if (col === 'id' || col.endsWith('_id')) {
-                return 'UUID_TO_BIN(?)';
-            }
-            return '?';
+    async create(data: Partial<T>): Promise<T> {
+        const formattedData = this.formatInput(data);
+
+        if (!formattedData.id) {
+            // uuidv4() génère la string, uuidParse() la transforme en Uint8Array (Buffer)
+            formattedData.id = Buffer.from(uuidParse(uuidv4()));
+        }
+        if ('created_at' in data && typeof data.created_at === 'string') {
+            data.created_at = new Date(data.created_at);
+        }
+        console.log(formattedData)
+        const item = await this.db.create({
+            data: formattedData
         });
-
-        const values = [newId, ...Object.values(data)];
-
-        const sql = `
-            INSERT INTO ${this.tableName} (${columns.join(', ')}) 
-            VALUES (${placeholders.join(', ')})
-        `;
-
-        await pool.query<ResultSetHeader>(sql, values);
-        return this.findById(newId);
+        return this.formatOutput(item);
     }
 
-    public async update(id: string, data: Partial<T>): Promise<T | null> {
-        // 1. On récupère les colonnes à modifier
-        const columns = Object.keys(data);
-
-        // Si l'objet data est vide, on s'arrête là
-        if (columns.length === 0) return this.findById(id);
-
-        // 2. On construit la chaîne "colonne = ?"
-        // En gérant le UUID_TO_BIN si nécessaire
-        const setClause = columns.map(col => {
-            if (col.endsWith('_id')) {
-                return `${col} = UUID_TO_BIN(?)`;
-            }
-            return `${col} = ?`;
-        }).join(', ');
-
-        // 3. On prépare les valeurs (les données + l'ID pour le WHERE à la fin)
-        const values = [...Object.values(data), id];
-
-        // 4. On assemble la requête
-        // Note : On utilise UUID_TO_BIN(?) dans le WHERE pour la performance (index)
-        const sql = `
-        UPDATE ${this.tableName} 
-        SET ${setClause} 
-        WHERE id = UUID_TO_BIN(?)
-    `;
-
-        await pool.query(sql, values);
-
-        // 5. On retourne l'objet mis à jour
-        return this.findById(id);
+    async update(id: string, data: Partial<T>): Promise<T> {
+        const item = await this.db.update({
+            where: { id: uuidUtils.toBin(id) },
+            data: this.formatInput(data)
+        });
+        return this.formatOutput(item);
     }
 
-    public async delete(id: string): Promise<T | null> {
-        // 1. On récupère l'objet
-        const objectToDelete = await this.findById(id);
-
-        // 2. Si l'objet existe, on le supprime
-        if (objectToDelete) {
-            await pool.query(
-                `DELETE FROM ${this.tableName} WHERE id = UUID_TO_BIN(?)`,
-                [id]
-            );
+    async delete(id: string): Promise<T | null> {
+        const item = await this.findById(id);
+        if (item) {
+            await this.db.delete({
+                where: { id: uuidUtils.toBin(id) }
+            });
         }
-
-        // 3. On retourne l'objet (ou null s'il n'existait pas)
-        return objectToDelete;
+        return item;
     }
 
-    private formatResult(row: any): T {
-        if (!row) return row;
+    // --- MAPPING (La tuyauterie) ---
 
-        // On boucle sur toutes les colonnes du résultat
-        for (const key in row) {
-            // Si la valeur est un Buffer (ce que MySQL renvoie pour le binaire)
-            if (Buffer.isBuffer(row[key]) && row[key].length === 16) {
-                // On le transforme en string UUID lisible
-                row[key] = stringify(row[key]);
+    // String -> Buffer (pour Prisma/MariaDB)
+    protected formatInput(data: any): any {
+        const formatted = { ...data };
+        for (const key in formatted) {
+            if ((key === 'id' || key.endsWith('_id')) && typeof formatted[key] === 'string') {
+                formatted[key] = uuidUtils.toBin(formatted[key]);
             }
         }
-        return row as T;
+        return formatted;
+    }
+
+    // Buffer -> String (pour ton code TS/Frontend)
+    protected formatOutput(data: any): T {
+        const formatted = { ...data };
+        for (const key in formatted) {
+            const value = formatted[key];
+            // Vérifie si c'est un Buffer, un Uint8Array ou un objet de bytes Prisma
+            if (value instanceof Uint8Array) {
+                formatted[key] = uuidUtils.toStr(Buffer.from(value));
+            }
+        }
+        return formatted as T;
     }
 }

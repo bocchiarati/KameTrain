@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model exercise {
+  id                Bytes               @id @db.Binary(16)
+  muscle_group_id   Bytes?              @db.Binary(16)
+  name              String              @db.VarChar(255)
+  muscle_group      muscle_group?       @relation(fields: [muscle_group_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_exercise_muscle")
+  seance2exercice   seance2exercice[]
+  workout2exercices workout2exercices[]
+
+  @@index([muscle_group_id], map: "fk_exercise_muscle")
+}
+
+model follow {
+  source_id                     Bytes @db.Binary(16)
+  target_id                     Bytes @db.Binary(16)
+  users_follow_source_idTousers users @relation("follow_source_idTousers", fields: [source_id], references: [id], onUpdate: Restrict, map: "fk_follow_source")
+  users_follow_target_idTousers users @relation("follow_target_idTousers", fields: [target_id], references: [id], onUpdate: Restrict, map: "fk_follow_target")
+
+  @@id([source_id, target_id])
+  @@index([target_id], map: "fk_follow_target")
+}
+
+model muscle_group {
+  id       Bytes      @id @db.Binary(16)
+  libelle  String     @db.VarChar(255)
+  exercise exercise[]
+}
+
+model programm {
+  id                 Bytes           @id @db.Binary(16)
+  libelle            String?         @db.VarChar(255)
+  author_id          Bytes?          @db.Binary(16)
+  created_at         DateTime?       @default(now()) @db.Timestamp(0)
+  workout_day_number Int?
+  rest_day_number    Int?
+  week_number        Int?
+  seance             seance[]
+  user2programm      user2programm[]
+}
+
+model seance {
+  id              Bytes             @id @db.Binary(16)
+  programm_id     Bytes?            @db.Binary(16)
+  day             Int?
+  programm        programm?         @relation(fields: [programm_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_seance_programm")
+  seance2exercice seance2exercice[]
+  workout         workout[]
+
+  @@index([programm_id], map: "fk_seance_programm")
+}
+
+model seance2exercice {
+  id                   Bytes                  @id @db.Binary(16)
+  exercice_id          Bytes?                 @db.Binary(16)
+  seance_id            Bytes?                 @db.Binary(16)
+  order                Int?
+  template_unit_id     Int?
+  exercise             exercise?              @relation(fields: [exercice_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_s2e_exercise")
+  seance               seance?                @relation(fields: [seance_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_s2e_seance")
+  template_unit        template_unit?         @relation(fields: [template_unit_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_s2e_template")
+  seance_exercise_sets seance_exercise_sets[]
+
+  @@index([exercice_id], map: "fk_s2e_exercise")
+  @@index([seance_id], map: "fk_s2e_seance")
+  @@index([template_unit_id], map: "fk_s2e_template")
+}
+
+model seance_exercise_sets {
+  id                 Bytes            @id @db.Binary(16)
+  seance2exercice_id Bytes?           @db.Binary(16)
+  set_number         Int?
+  min_reps_target    Int?
+  max_reps_target    Int?
+  seance2exercice    seance2exercice? @relation(fields: [seance2exercice_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ses_s2e")
+
+  @@index([seance2exercice_id], map: "fk_ses_s2e")
+}
+
+model template_unit {
+  id              Int               @id @default(autoincrement())
+  unit_id         Int?
+  libelle         String?           @db.VarChar(50)
+  is_range        Boolean?          @default(false)
+  seance2exercice seance2exercice[]
+  unit            unit?             @relation(fields: [unit_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_template_unit_unit")
+
+  @@index([unit_id], map: "fk_template_unit_unit")
+}
+
+model unit {
+  id                    Int                     @id @default(autoincrement())
+  libelle               String                  @db.VarChar(50)
+  template_unit         template_unit[]
+  workout_exercise_sets workout_exercise_sets[]
+}
+
+model user2programm {
+  user_id     Bytes    @db.Binary(16)
+  programm_id Bytes    @db.Binary(16)
+  programm    programm @relation(fields: [programm_id], references: [id], onUpdate: Restrict, map: "fk_u2p_programm")
+  users       users    @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "fk_u2p_user")
+
+  @@id([user_id, programm_id])
+  @@index([programm_id], map: "fk_u2p_programm")
+}
+
+model users {
+  id                             Bytes           @id @db.Binary(16)
+  username                       String          @db.VarChar(255)
+  role                           String?         @db.VarChar(50)
+  created_at                     DateTime?       @default(now()) @db.Timestamp(0)
+  follow_follow_source_idTousers follow[]        @relation("follow_source_idTousers")
+  follow_follow_target_idTousers follow[]        @relation("follow_target_idTousers")
+  user2programm                  user2programm[]
+  workout                        workout[]
+}
+
+model workout {
+  id                Bytes               @id @db.Binary(16)
+  seance_id         Bytes?              @db.Binary(16)
+  user_id           Bytes?              @db.Binary(16)
+  libelle           String?             @db.VarChar(255)
+  programm_name     String?             @db.VarChar(255)
+  day               Int?
+  week              Int?
+  created_at        DateTime?           @db.Date
+  duration          Int?
+  seance            seance?             @relation(fields: [seance_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_workout_seance")
+  users             users?              @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_workout_user")
+  workout2exercices workout2exercices[]
+
+  @@index([seance_id], map: "fk_workout_seance")
+  @@index([user_id], map: "fk_workout_user")
+}
+
+model workout2exercices {
+  id                    Bytes                   @id @db.Binary(16)
+  workout_id            Bytes?                  @db.Binary(16)
+  exercice_id           Bytes?                  @db.Binary(16)
+  order                 Int?
+  exercise              exercise?               @relation(fields: [exercice_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_w2e_exercise")
+  workout               workout?                @relation(fields: [workout_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_w2e_workout")
+  workout_exercise_sets workout_exercise_sets[]
+
+  @@index([exercice_id], map: "fk_w2e_exercise")
+  @@index([workout_id], map: "fk_w2e_workout")
+}
+
+model workout_exercise_sets {
+  id                   Bytes              @id @db.Binary(16)
+  workout2exercices_id Bytes?             @db.Binary(16)
+  set_number           Int?
+  reps_done            Int?
+  unit_id              Int?
+  weight_kg            Float?             @db.Float
+  unit                 unit?              @relation(fields: [unit_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_wes_unit")
+  workout2exercices    workout2exercices? @relation(fields: [workout2exercices_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_wes_w2e")
+
+  @@index([unit_id], map: "fk_wes_unit")
+  @@index([workout2exercices_id], map: "fk_wes_w2e")
+}
