@@ -1,7 +1,10 @@
-import type {BaseRepository} from "../repositories/baseRepository.js";
+import {BaseRepository} from "../repositories/baseRepository.js";
 
-export abstract class BaseService<T> {
-    protected constructor(protected repository: BaseRepository<T>) {}
+export class BaseService<T> {
+    protected repository: BaseRepository<T>;
+    constructor(protected modelName: string) {
+        this.repository = new BaseRepository<T>(modelName)
+    }
 
     async getAll (): Promise<T[]> {
         return await this.repository.findAll()

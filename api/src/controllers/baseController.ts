@@ -1,8 +1,8 @@
 import type {Request, Response} from 'express';
 import {BaseService} from "../services/baseService.js";
 
-export abstract class BaseController<T> {
-    protected constructor(protected service: BaseService<T>) {}
+export class BaseController<T> {
+    constructor(modelName: string, protected service: BaseService<T> = new BaseService(modelName)) {}
 
     // Utilise des fonctions fléchées ici
     getAll = async (req: Request, res: Response) => {

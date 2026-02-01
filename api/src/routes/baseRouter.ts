@@ -1,20 +1,20 @@
 import { Router } from 'express';
 import { BaseController } from '../controllers/baseController.js';
 
-export abstract class BaseRouter<T> {
+export class BaseRouter<T> {
     public router: Router;
 
-    protected constructor(protected controller: BaseController<T>) {
+    constructor(protected modelName: string, protected controller: BaseController<T> = new BaseController<T>(modelName)) {
         this.router = Router();
         this.initRoutes();
     }
 
-    // On définit les routes CRUD standards
     protected initRoutes() {
-        this.router.get('/', this.controller.getAll);
-        this.router.get('/:id', this.controller.getById);
-        this.router.post('/', this.controller.create);
-        this.router.patch('/:id', this.controller.edit);
-        this.router.delete('/:id', this.controller.delete);
+        // .bind(this.controller) est indispensable pour ne pas perdre le "this"
+        this.router.get('/', this.controller.getAll.bind(this.controller));
+        this.router.get('/:id', this.controller.getById.bind(this.controller));
+        this.router.post('/', this.controller.create.bind(this.controller));
+        this.router.patch('/:id', this.controller.edit.bind(this.controller));
+        this.router.delete('/:id', this.controller.delete.bind(this.controller));
     }
 }
