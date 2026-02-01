@@ -47,7 +47,6 @@ export class BaseRepository<T> {
         if ('created_at' in data && typeof data.created_at === 'string') {
             data.created_at = new Date(data.created_at);
         }
-        console.log(formattedData)
         const item = await this.db.create({
             data: formattedData
         });
