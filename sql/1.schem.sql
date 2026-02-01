@@ -48,7 +48,7 @@ CREATE TABLE unit (
     libelle VARCHAR(50) NOT NULL
 );
 
-INSERT INTO unit (id, libelle) VALUES (1, "reps"), (2, "secondes"), (3, "minutes");
+INSERT INTO unit (id, libelle) VALUES (1, 'reps'), (2, 'secondes'), (3, 'minutes');
 
 CREATE TABLE template_unit (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -59,12 +59,12 @@ CREATE TABLE template_unit (
 );
 
 INSERT INTO template_unit (unit_id, libelle, is_range) VALUES
-      (1, "reps", false),
-      (1, "reps_range", true),
-      (2, "secondes", false),
-      (2, "secondes_range", true),
-      (3, "minutes", false),
-      (3, "minutes_range", true);
+      (1, 'reps', false),
+      (1, 'reps_range', true),
+      (2, 'secondes', false),
+      (2, 'secondes_range', true),
+      (3, 'minutes', false),
+      (3, 'minutes_range', true);
 
 CREATE TABLE exercise (
     id BINARY(16) PRIMARY KEY,
@@ -77,7 +77,7 @@ CREATE TABLE exercise (
 CREATE TABLE programm (
     id BINARY(16) PRIMARY KEY,
     libelle VARCHAR(255),
-    author_id INT,
+    author_id BINARY(16),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     workout_day_number INT,
     rest_day_number INT,
